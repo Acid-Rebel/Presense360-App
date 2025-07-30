@@ -1,0 +1,2 @@
+C:/Users/ajeth/OneDrive/Desktop/Prgs/Flut/flutter_application_1 - Copy/android/app/.cxx/RelWithDebInfo/6304o3n1/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/ajeth/OneDrive/Desktop/Prgs/Flut/flutter_application_1 - Copy/android/app/.cxx/RelWithDebInfo/6304o3n1/x86_64/CMakeFiles/rebuild_cache.dir
