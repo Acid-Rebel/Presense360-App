@@ -3,6 +3,7 @@ import 'dash.dart';
 import 'attednance.dart';
 import 'login.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hive/hive.dart';
 
 class LeaveRequestPage extends StatefulWidget {
   final String token;
@@ -247,16 +248,16 @@ class _LeaveRequestPageState extends State<LeaveRequestPage> {
       return true;
     }).toList();
 
-    final Color themeColor = const Color.fromARGB(255, 151, 10, 0);
+    final Color themeColor = Color.fromARGB(255, 79, 108, 147);
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.red,
+        backgroundColor: themeColor,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text("AmritaAttend - Faculty"),
+            const Text("Presense360"),
             Row(
               children: [
                 // Logout Icon
@@ -265,6 +266,9 @@ class _LeaveRequestPageState extends State<LeaveRequestPage> {
                   onPressed: () async {
                     final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
                     await secureStorage.delete(key: 'token');
+                    await Hive.deleteBoxFromDisk('geoBox');
+                    await secureStorage.delete(key: 'hive_key');
+                    await secureStorage.delete(key: 'geo_data_written');
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (context) => const LoginScreen()),

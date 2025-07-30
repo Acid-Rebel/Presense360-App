@@ -86,8 +86,9 @@ flutter:
   uses-material-design: true
   assets:
    - assets/mobile_face_net.tflite
-
-   #- images/amrita-vishwa-vidyapeetham-logo-png_seeklogo-519922.png
+   - images/amrita-vishwa-vidyapeetham-logo-png_seeklogo-519922.png
+   - images/logo1.png
+   - images/logo2.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

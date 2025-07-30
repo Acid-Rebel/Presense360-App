@@ -13,7 +13,7 @@ import 'geofence_utils.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'geofence_utils.dart';
-
+import 'package:hive/hive.dart';
 
 
 
@@ -500,17 +500,6 @@ Future<int> isInLocation() async
   }
 
 
-  // void check() async
-  // {
-  //
-  //   final url = 'http://$IP/dashboard/status/check?rollno=$usernamee';
-  //   final response = await http.get(Uri.parse(url));
-  //   if (response.statusCode == 404) {
-  //     print("Database error\n");
-  //   }
-  //   //return jsonDecode(response.body);
-  //   setTime();
-  // }
 
   Future<Map<String, dynamic>> stat() async
   {
@@ -579,7 +568,7 @@ Future<int> isInLocation() async
 
   @override
   Widget build(BuildContext context) {
-    const Color themeColor = Color.fromARGB(255, 151, 10, 0);
+    const Color themeColor = Color.fromARGB(255, 79, 108, 147);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -587,12 +576,15 @@ Future<int> isInLocation() async
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text("AmritaAttend - Faculty"),
+            const Text("Presense360"),
             IconButton(
               icon: const Icon(Icons.logout, color: Colors.black),
               onPressed: () async {
                 final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
                 await secureStorage.delete(key: 'token');
+                await Hive.deleteBoxFromDisk('geoBox');
+                await secureStorage.delete(key: 'hive_key');
+                await secureStorage.delete(key: 'geo_data_written');
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -635,7 +627,7 @@ Future<int> isInLocation() async
                     InfoText(label: "ID", value: "${fetchID()}"),
                     InfoText(
                         label: "Department", value: "${fetchDepartment()}"),
-                    InfoText(label: "Amrita Email", value: "${fetchEmail()}"),
+                    //InfoText(label: "Amrita Email", value: "${fetchEmail()}"),
                     InfoText(label: "Mobile", value: "${fetchMobile()}"),
                     InfoText(label: "Status", value: "${status}"),
                     InfoText(label: "Check In",
@@ -769,7 +761,7 @@ class CheckButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color.fromARGB(255, 151, 10, 0),
+        backgroundColor: const Color.fromARGB(255, 79, 108, 147),
         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),

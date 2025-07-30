@@ -6,6 +6,7 @@ import 'login.dart';
 import 'dash.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hive/hive.dart';
 import 'leave.dart';
 
 class AttendanceScreen extends StatefulWidget
@@ -28,7 +29,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   final String IP="10.12.225.247:5000";
 
 
-  final Color themeColor = const Color.fromARGB(255, 151, 10, 0);
+  final Color themeColor = const Color.fromARGB(255, 79, 108, 147);
 
   void showSimplePopup(BuildContext context, String message) {
     showDialog(
@@ -349,12 +350,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text("AmritaAttend - Faculty"),
+            const Text("Presense360"),
             IconButton(
               icon: const Icon(Icons.logout, color: Colors.black),
               onPressed: () async {
                 final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
                 await secureStorage.delete(key: 'token');
+                await Hive.deleteBoxFromDisk('geoBox');
+                await secureStorage.delete(key: 'hive_key');
+                await secureStorage.delete(key: 'geo_data_written');
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),

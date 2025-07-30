@@ -181,10 +181,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const themeColor = Color.fromARGB(255, 151, 10, 0);
+    const themeColor = Color.fromARGB(255, 79, 108, 147);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AmritaAttend-Faculty'),
+        title: const Text('Presense360'),
         backgroundColor: themeColor,
       ),
       backgroundColor: Colors.white,
@@ -197,7 +197,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Transform.translate(
                 offset: const Offset(0, -20),
                 child: Image.asset(
-                  'images/amrita-vishwa-vidyapeetham-logo-png_seeklogo-519922.png',
+                  //'images/amrita-vishwa-vidyapeetham-logo-png_seeklogo-519922.png',
+                  'images/logo1.png',
                   height: 100,
                 ),
               ),
