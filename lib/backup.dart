@@ -41,7 +41,7 @@ class _MyAppState extends State<MyApp>
   bool devMode= false;
   bool _isEmulator = false;
   bool _checked = false;
-  //bool isDebugging = developer.Debugger.isAttached;
+
 
   @override
   void initState()
@@ -80,8 +80,7 @@ class _MyAppState extends State<MyApp>
       keyString = key.join(',');
     }
 
-    final encryptionKey =
-    Uint8List.fromList(keyString.split(',').map(int.parse).toList());
+    final encryptionKey = Uint8List.fromList(keyString.split(',').map(int.parse).toList());
 
     // Open Hive box with encryption
     await Hive.openBox('geoBox', encryptionCipher: HiveAesCipher(encryptionKey));
@@ -204,6 +203,10 @@ class _MyAppState extends State<MyApp>
     if (response.statusCode == 200) {
       return DashboardScreen(token: token);
     } else {
+      await secureStorage.delete(key: 'geo_data_written');
+      await secureStorage.delete(key: 'token');
+      await Hive.deleteBoxFromDisk('geoBox');
+      await secureStorage.delete(key: 'hive_key');
       return LoginScreen();
     }
   }

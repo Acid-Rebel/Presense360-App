@@ -14,29 +14,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'geofence_utils.dart';
 import 'package:hive/hive.dart';
-import 'face_auth_service.dart'; // Import the new service file
 
 
-// Global variable to store the list of available cameras
-late List<CameraDescription> cameras;
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Presense360',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: DashboardScreen(token: 'your_token_here'),
-    );
-  }
-}
+
 
 class DashboardScreen extends StatefulWidget {
+  //final String username;
   final String token;
   const DashboardScreen({required this.token});
 
@@ -45,51 +30,37 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  // Placeholder functions for user details.
+
+
   String get token=>widget.token;
+  //String get usernamee => widget.username;
+
+  //late Future<List<String?>> data;
   Map<String, dynamic> datas = {};
   String status = "Not Checked In";
   String? checkInTime = "";
   String? checkOutTime = "";
   bool logindontappear = true;
   bool serverError=false;
+  //final String IP="192.168.1.2:5000";
+  //final String IP="10.12.66.36:5000";
   final String IP="10.12.225.247:5000";
 
-  late FaceAuthService _faceAuthService;
-  bool _isFaceRegistered = false;
-
-  late Future<void> _initServiceFuture;
 
   @override
   void initState() {
     super.initState();
-    _initServiceFuture = _initService();
     processData();
     setTime();
   }
 
-  Future<void> _initService() async {
-    _faceAuthService = await FaceAuthService.create();
-    setState(() {
-      _isFaceRegistered = _faceAuthService.isFaceRegistered;
-    });
-  }
-
-  void _registerFace() async {
-    final result = await _faceAuthService.registerFace();
-    showSimplePopup(context, result['message']!);
-    if (result['success']) {
-      setState(() {
-        _isFaceRegistered = true;
-      });
-    }
-  }
 
 
   void showCheckDialog(bool isCheckIn) async {
     String locationStatus = "Acquiring GPS...";
     String biometricStatus = "Awaiting...";
-    bool authSuccess = false;
-    String? authMessage;
+    String? success;
 
     late StateSetter dialogSetState;
 
@@ -127,38 +98,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // LOCATION CHECK
     int stat = await isInLocation();
-    stat = 1;
-    if (stat == -4) {
+    if (stat == -4)
+    {
       showSimplePopupsign(context, "Invalid Token, re login!");
-      return;
     }
     dialogSetState(() {
       locationStatus = switch (stat) {
         1 => "✅ In premise",
         0 => "❌ Not in premise",
         -4 => "❌ Invalid Token",
-        -99=>"⚠️ GPS MOCKED!!",
+        -99=>"️⚠️GPS MOCKED!!",
         _ => "⚠️ GPS/Permission error"
       };
     });
 
-    // BIOMETRIC (FACIAL) CHECK
-    if (stat == 1) {
-      dialogSetState(() {
-        biometricStatus = "Running face authentication...";
-      });
-      final authResult = await _faceAuthService.authenticateFace();
-      authSuccess = authResult['success'];
-      authMessage = authResult['message'];
-
-      dialogSetState(() {
-        biometricStatus = authSuccess ? "✅ Authenticated" : "❌ Failed";
-      });
-
-      if (!authSuccess) {
-        showSimplePopup(context, authMessage!);
-      }
-    }
+    // BIOMETRIC (FACIAL) CHECK USING WEBSOCKET
 
     // Show final result
     showDialog(
@@ -171,11 +125,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("Location: $locationStatus"),
-              Text("Biometric: $biometricStatus"),
+              Text("Biometric: Feature to be implemented soon"),
               const SizedBox(height: 10),
-              if (stat == 1 && authSuccess)
+              if (stat == 1 )
                 Text(
-                  isCheckIn ? "Authenticated Successfully, Checking in.." : "Authenticated Successfully, Checking out..",
+                  isCheckIn ? "Authenticated  Successfully, Checking in.." : "Authenticated Successfully, Checking out..",
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
             ],
@@ -184,14 +138,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             TextButton(
               child: const Text("OK"),
               onPressed: () {
-                Navigator.of(context).pop();
-                if (stat == -4) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        (Route<dynamic> route) => false,
-                  );
-                }
+                success=="Invalid token"? Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      (Route<dynamic> route) => false,
+                ) // go to login page
+                    :Navigator.of(context).pop();
               },
             ),
           ],
@@ -200,44 +152,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
 
     // Final Action
-    if (stat == 1 && authSuccess) {
+    if (stat == 1) {
       isCheckIn ? checkin("aa") : checkout("aa");
       setTime();
     }
+
+
+
+
+
   }
 
+
+
+
+
+
   void handleCheckIn() => showCheckDialog(true);
+
   void handleCheckOut() => showCheckDialog(false);
 
   final LocalAuthentication auth = LocalAuthentication();
 
-  void checkin(String authToken) async {
+
+
+  void checkin(String authToken) async
+  {
+
     final url = Uri.parse('http://$IP/dashboard/status/checkin');
     final response = await http.post(
       url,
       headers: {"Authorization": "Bearer $token",'authToken': authToken,},
+
     );
-    if (response.statusCode == 500) {
+    if (response.statusCode == 500)
+    {
       showSimplePopupsign(context,"Internal Server Error");
       return;
-    } else if(response.statusCode == 407 || response.statusCode == 408) {
+    }
+    else if(response.statusCode == 407 || response.statusCode == 408)
+    {
       showSimplePopup(context, "Invalid authentication Token, try again");
       return;
-    } else if(response.statusCode == 405) {
+    }
+    else if(response.statusCode == 405)
+    {
       showSimplePopup(context, "Illegal authentication Token, try again");
       return;
-    } else if(response.statusCode == 406) {
+    }
+    else if(response.statusCode == 406)
+    {
       showSimplePopupsign(context, "Invalid Token, re-login!");
       setState(() {
         serverError=true;
       });
       return;
-    } else if(response.statusCode == 409) {
+    }
+    else if(response.statusCode == 409)
+    {
       showSimplePopupsign(context, "Invalid Authentication Token, Try again!");
       setState(() {
       });
       return;
-    } else if (response.statusCode == 400) {
+    }
+    else if (response.statusCode == 400)
+    {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Already checked In!')),
       );
@@ -245,34 +224,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setTime();
   }
 
-  void checkout(String authToken) async {
+  void checkout(String authToken) async
+  {
+
     final url = Uri.parse('http://$IP/dashboard/status/checkout');
     final response = await http.post(
       url,
       headers: {"Authorization": "Bearer $token",'authToken': authToken,},
+
     );
     if (response.statusCode == 500) {
       showSimplePopupsign(context,"Internal Server Error");
       return;
-    } else if (response.statusCode == 401) {
+    }
+    else if (response.statusCode == 401) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Not Checked In!!')),
       );
       return;
-    } else if(response.statusCode == 405) {
+    }
+    else if(response.statusCode == 405)
+    {
       showSimplePopup(context, "Illegal authentication Token, try again");
       return;
-    } else if(response.statusCode == 407 || response.statusCode == 407) {
+    }
+    else if(response.statusCode == 407 || response.statusCode == 407)
+    {
       showSimplePopupsign(context, "Invalid Authentication Token, Try again!");
       setState(() {
       });
       return;
-    } else if (response.statusCode == 402) {
+    }
+    else if (response.statusCode == 402) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Already Checked Out')),
       );
       return;
-    } else if(response.statusCode == 406) {
+    }
+    else if(response.statusCode == 406)
+    {
       showSimplePopupsign(context, "Invalid Token, re-login!");
       setState(() {
         serverError=true;
@@ -331,7 +321,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
                       (Route<dynamic> route) => false,
-                );
+                ); // go to login page
               },
               child: Text("Close"),
             ),
@@ -340,23 +330,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
     );
   }
-  Future<Map<String, dynamic>> fetchData() async {
+  Future<Map<String, dynamic>> fetchData() async
+  {
+
     final url = Uri.parse('http://$IP/dashboard');
     final response = await http.get(
       url,
       headers: {"Authorization": "Bearer $token"},
     );
-    if(response.statusCode==500) {
+    if(response.statusCode==500)
+    {
       showSimplePopupsign(context, "Internal Server Error");
       setState(() {
         serverError=true;
       });
-    } else if(response.statusCode==404) {
+    }
+    else if(response.statusCode==404)
+    {
       showSimplePopupsign(context, "User Data not found");
       setState(() {
         serverError=true;
       });
-    } else if(response.statusCode==406) {
+    }
+    else if(response.statusCode==406)
+    {
       showSimplePopupsign(context, "Invalid token, re-login!");
       setState(() {
         serverError=true;
@@ -365,37 +362,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return jsonDecode(response.body);
   }
 
-  String? fetchName() {
-    if (datas["name"]==null) {
+  String? fetchName()
+  {
+    if (datas["name"]==null)
+    {
       return " ";
     }
     return datas["name"];
   }
 
-  String? fetchID() {
-    if (datas["rollno"]==null) {
+  String? fetchID()
+  {
+    if (datas["rollno"]==null)
+    {
       return " ";
     }
     return datas["rollno"];
   }
 
-  String? fetchDepartment() {
-    if (datas["dept"]==null) {
+  String? fetchDepartment()
+  {
+    if (datas["dept"]==null)
+    {
       return " ";
     }
     return datas["dept"];
   }
 
-  String? fetchMobile() {
-    if (datas["mobile"]==null) {
+  String? fetchEmail()
+  {
+    if (datas["email"]==null)
+    {
+      return " ";
+    }
+    return datas["email"];
+  }
+
+  String? fetchMobile()
+  {
+    if (datas["mobile"]==null)
+    {
       return " ";
     }
     return datas["mobile"];
   }
 
   String fetchGraceTime() => "160";
+
   String fetchPhotoUrl() => "https://via.placeholder.com/150";
+
   String fetchQrCodeUrl() => "https://via.placeholder.com/150";
+
 
   String _location = "";
 
@@ -403,16 +420,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     bool serviceEnabled;
     LocationPermission permission;
 
+    // Check if location service is enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return "GPSENABLE";
     }
 
     bool isMock = await SafeDevice.isMockLocation;
-    if(isMock) {
+    if(isMock)
+    {
       return "GPSMOCKED";
     }
-
+    // Check location permissions
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -436,7 +455,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           title: Text("Alert"),
           content: Text(
             message,
-            textAlign: TextAlign.center,
+            textAlign: TextAlign.center, // 👈 center the message
           ),
           actions: [
             TextButton(
@@ -452,24 +471,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Future<int> isInLocation() async {
+  Future<int> isInLocation() async
+  {
     String permission = await _getPermision();
-    if (permission=="true") {
+    if (permission=="true")
+    {
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
       bool res = await isInsideAnyFence(position.longitude, position.latitude);
-      if(res==true) {
+      if(res==true)
+      {
         return 1;
-      } else {
+      }
+      else
+      {
         return 0;
       }
-    } else if(permission=="GPSMOCKED") {
+    }
+    else if(permission=="GPSMOCKED")
+    {
       showSimplePopupexit(context, "GPS MOCKED!!");
       return -99;
-    } else {
+    }
+    else
+    {
       return -1;
     }
   }
+
+
 
   Future<Map<String, dynamic>> stat() async
   {
@@ -511,16 +541,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (latestData.isEmpty) {
         status = "Not Checked In";
         logindontappear = false;
-      } else if(latestData["message"]=="Error") {
+      }
+      else if(latestData["message"]=="Error")
+      {
         logindontappear = true;
-      } else if (latestData["type"] == 0 && latestData["checkout"] == null && latestData["checkin"] != null) {
+      }
+      else if (latestData["type"] == 0 && latestData["checkout"] == null &&
+          latestData["checkin"] != null) {
         status = "Checked In";
         checkInTime = latestData["checkin"];
         logindontappear = false;
-      } else if (latestData["type"] == 5) {
+      }
+      else if (latestData["type"] == 5) {
         status = "Not Checked In";
         logindontappear = false;
-      } else if (latestData["type"] == 0 && latestData["checkout"] != null && latestData["checkin"] != null) {
+      }
+      else if (latestData["type"] == 0 && latestData["checkout"] != null &&
+          latestData["checkin"] != null) {
         status = "Checked Out";
         checkInTime = latestData["checkin"];
         checkOutTime = latestData["checkout"];
@@ -561,91 +598,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-      body: FutureBuilder<void>(
-        future: _initServiceFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Column(
-              children: [
-                const SizedBox(height: 10),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ProfileBox(imageUrl: fetchPhotoUrl(), label: "Photo"),
-                              ProfileBox(
-                                  imageUrl: fetchQrCodeUrl(), label: "QR Code"),
-                            ],
-                          ),
-                          const SizedBox(height: 30),
-                          InfoText(label: "Name", value: "${fetchName()}"),
-                          InfoText(label: "ID", value: "${fetchID()}"),
-                          InfoText(label: "Department", value: "${fetchDepartment()}"),
-                          InfoText(label: "Mobile", value: "${fetchMobile()}"),
-                          InfoText(label: "Status", value: "${status}"),
-                          InfoText(label: "Check In", value: checkInTime ?? "Not Checked In"),
-                          InfoText(label: "Check Out", value: checkOutTime ?? "Not Checked Out"),
-                          InfoText(label: "Grace Time Available", value: "${fetchGraceTime()} / 180"),
-                          const SizedBox(height: 20),
-                          Center(
-                            child: (serverError==true)
-                                ?const SizedBox()
-                                : (logindontappear == true)
-                                ? const SizedBox()
-                                : checkInTime == ""
-                                ? CheckButton(label: "Check In", onPressed: handleCheckIn)
-                                : (checkOutTime == ""
-                                ? CheckButton(label: "Check Out", onPressed: handleCheckOut)
-                                : const SizedBox()),
-                          ),
-                          const SizedBox(height: 20),
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: _isFaceRegistered ? null : _registerFace,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.teal,
-                                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                              child: Text(
-                                _isFaceRegistered ? "Face Registered" : "Register Face",
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+      body: Column(
+        children: [
+          const SizedBox(height: 10),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ],
-            );
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Profile pictures row.
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ProfileBox(imageUrl: fetchPhotoUrl(), label: "Photo"),
+                        ProfileBox(
+                            imageUrl: fetchQrCodeUrl(), label: "QR Code"),
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+                    InfoText(label: "Name", value: "${fetchName()}"),
+                    InfoText(label: "ID", value: "${fetchID()}"),
+                    InfoText(
+                        label: "Department", value: "${fetchDepartment()}"),
+                    //InfoText(label: "Amrita Email", value: "${fetchEmail()}"),
+                    InfoText(label: "Mobile", value: "${fetchMobile()}"),
+                    InfoText(label: "Status", value: "${status}"),
+                    InfoText(label: "Check In",
+                        value: checkInTime ?? "Not Checked In"),
+                    InfoText(label: "Check Out",
+                        value: checkOutTime ?? "Not Checked Out"),
+                    InfoText(label: "Grace Time Available",
+                        value: "${fetchGraceTime()} / 180"),
+                    const SizedBox(height: 20),
+                    Center(
+                      child:
+                      (serverError==true)
+                          ?const SizedBox()
+                          :(logindontappear == true)
+                          ? const SizedBox()
+                          : checkInTime == ""
+                          ? CheckButton(
+                          label: "Check In", onPressed: handleCheckIn)
+                          : (checkOutTime == ""
+                          ? CheckButton(
+                          label: "Check Out", onPressed: handleCheckOut)
+                          : const SizedBox()),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
+      // Professional Bottom Navigation Bar.
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
+        // Dashboard is active.
         onTap: (int index) {
           if (index == 0) {
+            // Already on Dashboard.
           } else if (index == 1) {
+            String user = "${fetchID()}";
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AttendanceScreen(token: token)),
+              MaterialPageRoute(
+                  builder: (context) => AttendanceScreen(token: token)),
             );
           } else if (index == 2) {
             Navigator.pushAndRemoveUntil(
@@ -677,8 +702,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-}
 
+
+}
 class ProfileBox extends StatelessWidget {
   final String imageUrl;
   final String label;

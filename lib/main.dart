@@ -83,6 +83,7 @@ class _MyAppState extends State<MyApp>
     final encryptionKey = Uint8List.fromList(keyString.split(',').map(int.parse).toList());
 
     // Open Hive box with encryption
+    await Hive.openBox('face_embeddings', encryptionCipher: HiveAesCipher(encryptionKey));
     await Hive.openBox('geoBox', encryptionCipher: HiveAesCipher(encryptionKey));
   }
   void checkDebugger() async {

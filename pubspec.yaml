@@ -30,7 +30,7 @@ environment:
 dependencies:
  flutter:
   sdk: flutter
- #image: ^4.5.4
+# image: ^4.5.4
  cupertino_icons: ^1.0.8
  table_calendar: ^3.2.0
  vm_service: 15.0.0
@@ -54,8 +54,10 @@ dependencies:
  flutter_secure_storage: ^9.2.4
  hive: ^2.2.3
  hive_flutter: ^1.1.0
+ google_mlkit_face_detection: ^0.13.1
+ google_mlkit_commons: ^0.11.0
  image: ^4.1.7
-# tflite_flutter: ^0.11.0
+ tflite_flutter: ^0.11.0
 
 # crypto: ^3.0.3
 
@@ -85,7 +87,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-#   - assets/mobile_face_net.tflite
+   - assets/mobile_face_net.tflite
    - images/amrita-vishwa-vidyapeetham-logo-png_seeklogo-519922.png
    - images/logo1.png
    - images/logo2.png
